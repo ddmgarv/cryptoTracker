@@ -1,61 +1,78 @@
 import React, { Component } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import Http from '../../libs/http';
 import Urls from '../../libs/urls';
-
+import CoinItem from './CoinItem';
+import { Colors } from '../../resources/colors'
 class CoinsScreen extends Component {
-
   state = {
-    coins: []
-  }
+    coins: [],
+    loading: false,
+  };
 
   componentDidMount = async () => {
+    this.setState({ loading: true });
     const coins = await Http.instance.get(Urls.instance.tickers);
-    this.handleCoins(coins)
-  }
+    this.setState({ loading: false });
+    this.handleCoins(coins);
+  };
 
   handleCoins = (coins) => {
-    console.log(coins);
-    this.setState({ coins }, console.log(this.state));
-  }
+    this.setState({ coins });
+  };
 
   handlePress = () => {
     this.props.navigation.navigate('CoinDetail');
-  }
+  };
 
   render() {
+    const { coins, loading } = this.state;
+    console.log('COINSCREEN:', coins);
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Coins Screen</Text>
-        <Pressable style={styles.btn} onPress={this.handlePress}>
-          <Text style={styles.btnText}>Ir a detalles</Text>
-        </Pressable>
+        {loading && (
+          <ActivityIndicator
+            style={styles.loader}
+            color="#000"
+            size="large"
+          />
+        )}
+        <FlatList data={coins.data} renderItems={CoinItem} />
       </View>
-    )
+    );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: Colors.charade
   },
   title: {
     textAlign: 'center',
-    color: '#fff'
+    color: '#fff',
   },
   btn: {
     padding: 8,
     backgroundColor: 'blue',
     borderRadius: 8,
-    margin: 16
+    margin: 16,
   },
   btnText: {
     color: '#fff',
-    textAlign: 'center'
-  }
-})
-
+    textAlign: 'center',
+  },
+  loader: {
+    marginTop: 60,
+  },
+});
 
 export default CoinsScreen;
