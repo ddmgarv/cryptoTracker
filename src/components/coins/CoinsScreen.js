@@ -4,32 +4,48 @@ import Http from '../../libs/http';
 import Urls from '../../libs/urls';
 import CoinItem from './CoinItem';
 import Colors from '../../resources/colors';
+import CoinSearch from './CoinSearch';
 class CoinsScreen extends Component {
   state = {
     coins: [],
+    allCoins: [],
     loading: false,
   };
 
-  componentDidMount = async () => {
-    this.setState({ loading: true });
-    const coins = await Http.instance.get(Urls.instance.tickers);
-    this.setState({ loading: false });
-    this.handleCoins(coins);
+  componentDidMount = () => {
+    this.getCoins();
   };
 
-  handleCoins = (coins) => {
-    this.setState({ coins });
-  };
+  getCoins = async () => {
+    this.setState({ loading: true });
+    const res = await Http.instance.get(Urls.instance.tickers);
+    this.setState({
+      loading: false,
+      coins: res.data,
+      allCoins: res.data
+    });
+  }
 
   handlePress = (coin) => {
-    console.log(coin);
     this.props.navigation.navigate('CoinDetail', { coin });
   };
+
+  handleSearch = (query) => {
+    const { allCoins } = this.state;
+    const filteredCoins = allCoins.filter(coin => {
+      return (
+        coin.name.toLowerCase().includes(query.toLowerCase()) ||
+        coin.symbol.toLowerCase().includes(query.toLowerCase())
+      )
+    });
+    this.setState({ coins: filteredCoins });
+  }
 
   render() {
     const { coins, loading } = this.state;
     return (
       <View style={styles.container}>
+        <CoinSearch onChange={this.handleSearch} />
         {loading && (
           <ActivityIndicator
             style={styles.loader}
@@ -38,7 +54,7 @@ class CoinsScreen extends Component {
           />
         )}
         <FlatList
-          data={coins.data}
+          data={coins}
           renderItem={({ item }) => (
             <CoinItem
               item={item}

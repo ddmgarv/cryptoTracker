@@ -86,7 +86,8 @@ const styles = StyleSheet.create({
   },
   coinName: {
     color: '#fff',
-    fontSize: 14
+    fontSize: 14,
+    paddingLeft: 5
   },
   iconImage: {
     width: 25,
@@ -102,7 +103,8 @@ const styles = StyleSheet.create({
   subHeader: {
     backgroundColor: 'rgba(0,0,0,0.2)',
     padding: 16,
-    flexDirection: 'row'
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   sectionHeader: {
     backgroundColor: 'rgba(0,0,0,0.2)'
