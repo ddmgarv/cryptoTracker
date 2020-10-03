@@ -10,7 +10,7 @@ import {
 import Http from '../../libs/http';
 import Urls from '../../libs/urls';
 import CoinItem from './CoinItem';
-import { Colors } from '../../resources/colors'
+import Colors from '../../resources/colors';
 class CoinsScreen extends Component {
   state = {
     coins: [],
@@ -28,13 +28,13 @@ class CoinsScreen extends Component {
     this.setState({ coins });
   };
 
-  handlePress = () => {
-    this.props.navigation.navigate('CoinDetail');
+  handlePress = (coin) => {
+    console.log(coin);
+    this.props.navigation.navigate('CoinDetail', { coin });
   };
 
   render() {
     const { coins, loading } = this.state;
-    console.log('COINSCREEN:', coins);
     return (
       <View style={styles.container}>
         {loading && (
@@ -44,7 +44,15 @@ class CoinsScreen extends Component {
             size="large"
           />
         )}
-        <FlatList data={coins.data} renderItems={CoinItem} />
+        <FlatList
+          data={coins.data}
+          renderItem={({ item }) => (
+            <CoinItem
+              item={item}
+              onPress={this.handlePress}
+            />
+          )}
+        />
       </View>
     );
   }
