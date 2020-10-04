@@ -1,26 +1,28 @@
 import React, { Component } from 'react'
-import { View, Image, Text, StyleSheet, FlatList, SectionList } from 'react-native';
+import { View, Image, Text, StyleSheet, FlatList, Pressable, SectionList, Alert } from 'react-native';
 import Colors from '../../resources/colors';
 import Http from '../../libs/http';
 import Urls from '../../libs/urls';
+import Storage from '../../libs/storage';
 import CoinMarketItem from './CoinMarketItem';
-
 class CoinsDetailsScreen extends Component {
   state = {
-    markets: []
+    markets: [],
+    isFavorite: false,
+    coin: this.props.route.params.coin
   }
 
   componentDidMount() {
-    const { coin } = this.props.route.params;
+    const { coin } = this.state;
     this.props.navigation.setOptions({ title: coin.symbol });
     this.getMarkets(coin.id);
+    this.getFavorite();
   }
 
   getMarkets = async (coinId) => {
     const markets = await Http.instance.get(Urls.instance.getCoinMarketsUrl(coinId));
-    console.log('MARKETS: ', markets);
     this.setState({ markets });
-  };
+  }
 
   getSection = (coin) => ([
     {
@@ -37,14 +39,78 @@ class CoinsDetailsScreen extends Component {
     }
   ])
 
+  toggleFavorite = () => {
+    if (this.state.isFavorite) {
+      this.removeFavorite();
+    } else {
+      this.addFavorite();
+    }
+  }
+
+  addFavorite = async () => {
+    const { coin } = this.state;
+    const coinStr = JSON.stringify(coin);
+    const key = `favorite-${coin.id}`;
+    const stored = await Storage.instance.store(key, coinStr);
+    if (stored) {
+      this.setState({ isFavorite: true });
+    }
+  }
+
+  getFavorite = async () => {
+    try {
+      const { coin } = this.state;
+      const key = `favorite-${coin.id}`;
+      const favoriteCoin = await Storage.instance.get(key);
+      if (favoriteCoin !== null) {
+        this.setState({ isFavorite: true });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  removeFavorite = () => {
+    Alert.alert('Remove favorite', 'Are you sure?', [
+      {
+        text: 'Cancel',
+        onPress: () => { },
+        style: 'cancel'
+      },
+      {
+        text: 'Remove',
+        onPress: async () => {
+          const { coin } = this.state;
+          const key = `favorite-${coin.id}`;
+          await Storage.instance.remove(key);
+          this.setState({ isFavorite: false });
+        },
+        style: 'destructive'
+      }
+    ])
+  }
+
   render() {
-    const { coin } = this.props.route.params;
-    const { markets } = this.state;
+    const { coin } = this.state;
+    const { markets, isFavorite } = this.state;
     return (
       <View style={styles.container}>
         <View style={styles.subHeader}>
-          <Image style={styles.iconImage} source={{ uri: Urls.instance.getSymbolUrl(coin.name) }} />
-          <Text style={styles.coinName}>{coin.name}</Text>
+          <View style={styles.row}>
+            <Image style={styles.iconImage} source={{ uri: Urls.instance.getSymbolUrl(coin.name) }} />
+            <Text style={styles.coinName}>{coin.name}</Text>
+          </View>
+          <Pressable
+            onPress={this.toggleFavorite}
+            style={[
+              styles.btnFavorite,
+              isFavorite ?
+                styles.btnFavoriteRemove
+                :
+                styles.btnFavoriteAdd
+            ]}>
+            <Text style={styles.btnText}>{isFavorite ? 'Remove favorite' : 'Add favorite'}</Text>
+          </Pressable>
         </View>
         <SectionList
           style={styles.section}
@@ -78,6 +144,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.charade,
     flex: 1
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   titleText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -104,7 +174,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.2)',
     padding: 16,
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
   sectionHeader: {
     backgroundColor: 'rgba(0,0,0,0.2)'
@@ -127,6 +198,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginLeft: 16,
     fontWeight: 'bold',
+  },
+  btnFavorite: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  btnText: {
+    color: '#fff'
+  },
+  btnFavoriteAdd: {
+    backgroundColor: Colors.picton
+  },
+  btnFavoriteRemove: {
+    backgroundColor: Colors.carmine
   }
 });
 
